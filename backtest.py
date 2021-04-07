@@ -518,67 +518,16 @@ def objective_function(result: dict, liq_cap: float, hours_stuck_cap: int, n_dai
 
 
 def create_config(backtest_config: dict) -> dict:
-    config = {}
-    config['folds'] = backtest_config['folds']
-    config['starting_balance'] = backtest_config['starting_balance']
-    config['inverse'] = backtest_config['inverse']
-    config['price_step'] = backtest_config['price_step']
-    config['qty_step'] = backtest_config['qty_step']
-    config['min_qty'] = backtest_config['min_qty']
-    config['min_cost'] = backtest_config['min_cost']
-    if 'latency_simulation_ms' in backtest_config:
-        config['latency_simulation_ms'] = backtest_config['latency_simulation_ms']
-    config['do_long'] = backtest_config['do_long']
-    config['do_shrt'] = backtest_config['do_shrt']
-    config['taker_fee'] = backtest_config['taker_fee']
-    config['maker_fee'] = backtest_config['maker_fee']
-    config['desired_minimum_liquidation_distance'] = backtest_config['desired_minimum_liquidation_distance']
-    config['desired_max_hours_stuck'] = backtest_config['desired_max_hours_stuck']
-    config['desired_minimum_daily_fills'] = backtest_config['desired_minimum_daily_fills']
-    config['leverage'] = backtest_config['leverage']
-    config['n_close_orders'] = backtest_config['n_close_orders']
-    config['exchange'] = backtest_config['exchange']
-
-    config['qty_pct'] = tune.quniform(backtest_config['ranges']['qty_pct'][0],
-                                      backtest_config['ranges']['qty_pct'][1],
-                                      backtest_config['ranges']['qty_pct'][2])
-    config['ddown_factor'] = tune.quniform(backtest_config['ranges']['ddown_factor'][0],
-                                           backtest_config['ranges']['ddown_factor'][1],
-                                           backtest_config['ranges']['ddown_factor'][2])
-    config['grid_coefficient'] = tune.quniform(backtest_config['ranges']['grid_coefficient'][0],
-                                               backtest_config['ranges']['grid_coefficient'][1],
-                                               backtest_config['ranges']['grid_coefficient'][2])
-    config['grid_spacing'] = tune.quniform(backtest_config['ranges']['grid_spacing'][0],
-                                           backtest_config['ranges']['grid_spacing'][1],
-                                           backtest_config['ranges']['grid_spacing'][2])
-    config['markup_range'] = tune.quniform(backtest_config['ranges']['markup_range'][0],
-                                           backtest_config['ranges']['markup_range'][1],
-                                           backtest_config['ranges']['markup_range'][2])
-    config['min_markup'] = tune.quniform(backtest_config['ranges']['min_markup'][0],
-                                         backtest_config['ranges']['min_markup'][1],
-                                         backtest_config['ranges']['min_markup'][2])
-    config['ema_span'] = tune.quniform(backtest_config['ranges']['ema_span'][0],
-                                       backtest_config['ranges']['ema_span'][1],
-                                       backtest_config['ranges']['ema_span'][2])
-    config['ema_spread'] = tune.quniform(backtest_config['ranges']['ema_spread'][0],
-                                         backtest_config['ranges']['ema_spread'][1],
-                                         backtest_config['ranges']['ema_spread'][2])
-
-    # config['leverage'] = tune.qrandint(backtest_config['ranges']['leverage'][0],
-    #                                    backtest_config['ranges']['leverage'][1],
-    #                                    backtest_config['ranges']['leverage'][2])
-    # config['n_close_orders'] = tune.qrandint(backtest_config['ranges']['n_close_orders'][0],
-    #                                          backtest_config['ranges']['n_close_orders'][1],
-    #                                          backtest_config['ranges']['n_close_orders'][2])
+    config = {k: backtest_config[k] for k in backtest_config
+              if k not in {'session_name', 'user', 'symbol', 'start_date', 'end_date', 'ranges'}}
+    for k in backtest_config['ranges']:
+        config[k] = tune.quniform(*[backtest_config['ranges'][k][i] for i in range(3)])
     return config
 
 
 def clean_start_config(start_config: dict, backtest_config: dict) -> dict:
-    clean_start = {}
-    for k, v in start_config.items():
-        if k in backtest_config:
-            clean_start[k] = v
-    return clean_start
+    quniforms = {k for k in backtest_config if type(backtest_config[k]) == ray.tune.sample.Float}
+    return {k: v for k, v in start_config.items() if k in quniforms}
 
 
 def k_fold(config, ticks=None):
@@ -610,15 +559,15 @@ def backtest_tune(ticks: np.ndarray, backtest_config: dict, current_best: dict =
     n_days = round_((ticks[-1][2] - ticks[0][2]) / (1000 * 60 * 60 * 24), 0.1)
     session_dirpath = make_get_filepath(os.path.join('reports', backtest_config['exchange'], backtest_config['symbol'],
                                                      f"{n_days}_days_{ts_to_date(time())[:19].replace(':', '')}", ''))
-    iters = 10
     if 'iters' in backtest_config:
         iters = backtest_config['iters']
     else:
+        iters = 10
         print('Parameter iters should be defined in the configuration. Defaulting to 10.')
-    num_cpus = 2
     if 'num_cpus' in backtest_config:
         num_cpus = backtest_config['num_cpus']
     else:
+        num_cpus = 2
         print('Parameter num_cpus should be defined in the configuration. Defaulting to 2.')
     current_best_params = []
     if current_best:
@@ -639,7 +588,7 @@ def backtest_tune(ticks: np.ndarray, backtest_config: dict, current_best: dict =
 
     ray.shutdown()
 
-    print('Best candidate found were: ', analysis.best_config)
+    print('Best candidate found was: ', analysis.best_config)
     plot_wrap(backtest_config, ticks, analysis.best_config)
     return analysis
 
