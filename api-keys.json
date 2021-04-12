@@ -1,8 +1,8 @@
 {
     "binance_01" : {
         "exchange": "binance",
-        "key": "key",
-        "secret": "secret"
+        "key": "fC6Im6hNuU5Lm1Ridktnk6O4HjjQ2IMwJzojrbsuMTstpQELAYU71b4GuaEbIhUy",
+        "secret": "A3OplnBiVS1gicLMDRWa1eA99gApMbYRVRWkyuXriD560ffLdbnXTEnpJaG4mQwJ"
     },
     "binance_02" : {
         "exchange": "binance",
