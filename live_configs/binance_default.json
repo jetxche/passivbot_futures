@@ -1,17 +1,19 @@
 {
-  "config_name": "55days_adg4.9%_liq16%_2021-03-29",
+  "config_name": "untested3.3.3.",
   "logging_level": 1,
-  "ddown_factor": 0.42,
+  "ddown_factor": 0.41,
   "qty_pct": 0.01,
   "leverage": 32.0,
   "n_entry_orders": 16,
   "n_close_orders": 24.0,
-  "grid_spacing": 0.004,
-  "grid_coefficient": 84.0,
-  "min_markup": 0.003,
-  "markup_range": 0.05,
+  "grid_spacing": 0.0045,
+  "grid_coefficient": 100.0,
+  "min_markup": 0.0038,
+  "markup_range": 0.057,
   "do_long": true,
   "do_shrt": true,
   "ema_span": 536785.0,
-  "ema_spread": 0.0048
+  "ema_spread": 0.005,
+  "stop_loss_liq_diff": 0.2,
+  "stop_loss_pos_pct": 0.01
 }
